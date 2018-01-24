@@ -49,6 +49,14 @@ func NewClient(c Config) (*Client, error) {
 // Post the specified event named 'name' with content 'event' whose type is 'contentType'.
 // Content type "application/xml" and "application/json" are supported
 func (c *Client) PostEvent(name string, event interface{}, contentType string) error {
+	return c.postEvent(name, event, contentType, true)
+}
+
+func (c *Client) PostInsecureEvent(name string, event interface{}, contentType string) error {
+	return c.postEvent(name, event, contentType, false)
+}
+
+func (c *Client) postEvent(name string, event interface{}, contentType string, secure bool) error {
 	if name == "" {
 		return errors.New("Missing event name")
 	}
@@ -70,7 +78,9 @@ func (c *Client) PostEvent(name string, event interface{}, contentType string) e
 		return fmt.Errorf("Encode event error: %v", err)
 	}
 
-	u.RawQuery = c.genQuery(u.Query()).Encode()
+	if secure {
+		u.RawQuery = c.genQuery(u.Query()).Encode()
+	}
 
 	resp, err := http.Post(u.String(), contentType, buf)
 	if nil != err {
